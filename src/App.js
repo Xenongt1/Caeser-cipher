@@ -13,39 +13,6 @@ function CipherWheel({ shift, mode }) {
     return { x, y };
   };
 
-  // Calculate the shifted letter
-  const getShiftedLetter = (index) => {
-    if (mode === 'encrypt') {
-      return alphabet[(index + shift) % 26];
-    } else {
-      return alphabet[(index - shift + 26) % 26];
-    }
-  };
-
-  // Draw connection lines for all letters
-  const connectionLines = alphabet.split('').map((_, i) => {
-    const outerPos = getPosition(i);
-    const shiftedIndex = mode === 'encrypt' 
-      ? (i + shift) % 26 
-      : (i - shift + 26) % 26;
-    const shiftedInnerPos = getPosition(shiftedIndex, true);
-    
-    return (
-      <g key={`line-${i}`}>
-        <line 
-          x1={outerPos.x} 
-          y1={outerPos.y} 
-          x2={shiftedInnerPos.x} 
-          y2={shiftedInnerPos.y} 
-          stroke="#3b82f6"
-          strokeWidth="1"
-          strokeDasharray="3,3"
-          opacity="0.4"
-        />
-      </g>
-    );
-  });
-
   return (
     <div className="w-full flex justify-center overflow-hidden">
       <svg viewBox="0 0 500 500" className="w-full max-w-2xl">
@@ -67,7 +34,25 @@ function CipherWheel({ shift, mode }) {
         <circle cx="250" cy="250" r="120" fill="none" stroke="#2563eb" strokeWidth="1" />
         
         {/* Connection lines */}
-        {connectionLines}
+        {alphabet.split('').map((_, i) => {
+          const outerPos = getPosition(i);
+          const innerPos = getPosition(i, true);
+          
+          return (
+            <g key={`line-${i}`}>
+              <line 
+                x1={outerPos.x} 
+                y1={outerPos.y} 
+                x2={innerPos.x} 
+                y2={innerPos.y} 
+                stroke="#3b82f6"
+                strokeWidth="1"
+                strokeDasharray="3,3"
+                opacity="0.4"
+              />
+            </g>
+          );
+        })}
         
         {/* Outer wheel letters */}
         {alphabet.split('').map((char, i) => {
@@ -97,10 +82,22 @@ function CipherWheel({ shift, mode }) {
           );
         })}
         
-        {/* Inner wheel letters - show all mapped letters */}
+        {/* Inner wheel letters - CORRECTED */}
         {alphabet.split('').map((_, i) => {
           const pos = getPosition(i, true);
-          const shiftedLetter = getShiftedLetter(i);
+          
+          // Calculate which letter should appear at this position based on the shift
+          // CORRECTED to follow traditional Caesar cipher wheel direction
+          let letterIndex;
+          if (mode === 'encrypt') {
+            // For encryption: Clockwise rotation (positive shift)
+            letterIndex = (i + shift) % 26;
+          } else {
+            // For decryption: Counterclockwise rotation (negative shift)
+            letterIndex = (i - shift + 26) % 26;
+          }
+          const letter = alphabet[letterIndex];
+          
           return (
             <g key={`inner-${i}`}>
               <circle 
@@ -120,7 +117,7 @@ function CipherWheel({ shift, mode }) {
                 fontWeight="bold"
                 fill="#1e3a8a"
               >
-                {shiftedLetter}
+                {letter}
               </text>
             </g>
           );
@@ -142,17 +139,7 @@ function CipherWheel({ shift, mode }) {
           {shift}
         </text>
         
-        {/* Rotation indicator */}
-        <line 
-          x1="250" 
-          y1="250" 
-          x2="250" 
-          y2="70" 
-          stroke="#2563eb" 
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <circle cx="250" cy="70" r="8" fill="#2563eb" />
+       
       </svg>
     </div>
   );
@@ -310,6 +297,7 @@ export default function App() {
         <h2 className="text-2xl font-bold mb-4">How It Works</h2>
         <p className="mb-4 text-blue-100">
           The Caesar cipher is a substitution cipher where each letter in the plaintext is shifted a certain number of places down the alphabet.
+          <br />For the Visualization, the outer wheel represents the original alphabet(plaintext), while the inner wheel shows the shifted letters(ciphertext) based on the selected shift value.
         </p>
         <div className="bg-white/20 p-4 rounded-lg backdrop-blur-sm">
           <p className="text-white">
@@ -321,7 +309,7 @@ export default function App() {
       </div>
       
       <footer className="text-center text-gray-500 text-sm mt-4 mb-8">
-        Created by TechWithChef1t • 
+        Created by TechWithChef1t 
       </footer>
     </div>
   );
